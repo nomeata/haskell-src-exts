@@ -192,13 +192,14 @@ double = return . P.double
 
 -- Simple Combining Forms
 
-parens, brackets, braces, doubleQuotes :: Doc -> Doc
+parens, brackets, braces :: Doc -> Doc
 parens d = d >>= return . P.parens
 brackets d = d >>= return . P.brackets
 braces d = d >>= return . P.braces
 -- quotes :: Doc -> Doc
 -- quotes d = d >>= return . P.quotes
-doubleQuotes d = d >>= return . P.doubleQuotes
+-- doubleQuotes :: Doc -> Doc
+-- doubleQuotes d = d >>= return . P.doubleQuotes
 
 parensIf :: Bool -> Doc -> Doc
 parensIf True = parens
@@ -890,11 +891,11 @@ instance  Pretty (Promoted l) where
   pretty p =
     case p of
       PromotedInteger _ n _ -> integer n
-      PromotedString _ s _ -> doubleQuotes $ text s
+      PromotedString _ s _ -> text (show s)
       PromotedCon _ hasQuote qn ->
         addQuote hasQuote (pretty qn)
       PromotedList _ hasQuote list ->
-        addQuote hasQuote $ bracketList . punctuate comma . map pretty $ list
+        (if hasQuote then quoteBracketList else  bracketList) . punctuate comma . map pretty $ list
       PromotedTuple _ list ->
         addQuote True $ parenList $ map pretty list
       PromotedUnit {} -> addQuote True $ text "()"
@@ -1449,6 +1450,10 @@ braceList = braces . myFsepSimple . punctuate comma
 
 bracketList :: [Doc] -> Doc
 bracketList = brackets . myFsepSimple
+
+quoteBracketList :: [Doc] -> Doc
+quoteBracketList [] = text "'[]"
+quoteBracketList l = char '\'' <> brackets (space <> myFsepSimple l)
 
 bracketColonList :: [Doc] -> Doc
 bracketColonList = bracketColons . myFsepSimple
